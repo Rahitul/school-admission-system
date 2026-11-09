@@ -1,0 +1,28 @@
+# Assumptions
+
+- A-01 Deadline time zone: Bangladesh Standard Time (UTC+6).
+- A-02 Identity = X-Student-Id header only; no login.
+- A-03 No admin authentication; admin screens are open.
+- A-04 Payment is simulated; clicking pay = success.
+- A-05 A student may hold one application per class; multiple shifts allowed.
+- A-06 Duplicate class names rejected (case-insensitive) with 409 DUPLICATE_CLASS_NAME.
+- A-07 Only HELD holds can be cancelled.
+- A-08 Owner mismatch returns 403 NOT_OWNER.
+- A-09 Error body: {"error":{"code","message"}}.
+- A-10 GET /holds/{id} requires no X-Student-Id.
+- A-11 IDs are prefixed GUIDs (c_..., h_...).
+- A-12 Single school, single academic year.
+- A-13 HOLD_DURATION_SECONDS, default 600, positive integer seconds.
+- A-14 Expiry: lazy evaluation + background sweeper every 5s.
+- A-15 UI uses polling (classes every 4s, holds every 4s).
+- A-16 Student ID = exactly 17 ASCII digits, leading zeros allowed.
+- A-17 Student ID persisted in browser localStorage.
+- A-18 No seed data; admin creates classes via UI.
+- A-19 UI messages in Bengali/English mix.
+- A-20 Applying to a full class returns 409 NO_SEATS.
+- A-21 Re-application after EXPIRED/CANCELLED allowed.
+- A-22 Repeated confirm returns 200 CONFIRMED, no double count.
+- A-23 Concurrency: PostgreSQL row lock (SELECT ... FOR UPDATE) on class row.
+- A-24 Schema created automatically on startup via EnsureCreated.
+- A-25 CORS allows any origin.
+- A-26 Designed for school-scale load (hundreds of concurrent applicants).

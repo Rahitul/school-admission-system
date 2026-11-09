@@ -1,0 +1,23 @@
+# .NET
+bin/
+obj/
+*.user
+.vs/
+*.pdb
+
+# Node / React
+node_modules/
+dist/
+
+# Environment files (secrets)
+.env
+*.env.local
+
+# OS and editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Assignment material (confidential)
+steps.md
+prd.md
