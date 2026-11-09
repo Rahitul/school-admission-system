@@ -155,18 +155,30 @@ public class AdmissionService
             if (heldCount + confirmedCount >= totalSeats)
                 throw new ApiException(ErrorCodes.NoSeats, "No seats are left in this class.", 409);
 
-            long already;
-            await using (var c3 = conn.CreateCommand())
+            long heldActive;
+            await using (var c3a = conn.CreateCommand())
             {
-                c3.Transaction = tx;
-                c3.CommandText = "SELECT COUNT(*) FROM holds WHERE \"ClassId\" = @cid AND \"StudentId\" = @sid AND ((\"Status\" = 'HELD' AND \"ExpiresAt\" > @now) OR \"Status\" = 'CONFIRMED')";
-                var p1 = c3.CreateParameter(); p1.ParameterName = "@cid"; p1.Value = classId; c3.Parameters.Add(p1);
-                var p2 = c3.CreateParameter(); p2.ParameterName = "@sid"; p2.Value = studentId; c3.Parameters.Add(p2);
-                var p3 = c3.CreateParameter(); p3.ParameterName = "@now"; p3.Value = now; c3.Parameters.Add(p3);
-                already = (long)(await c3.ExecuteScalarAsync(ct) ?? 0L);
+                c3a.Transaction = tx;
+                c3a.CommandText = "SELECT COUNT(*) FROM holds WHERE \"ClassId\" = @cid AND \"StudentId\" = @sid AND \"Status\" = 'HELD' AND \"ExpiresAt\" > @now";
+                var p1 = c3a.CreateParameter(); p1.ParameterName = "@cid"; p1.Value = classId; c3a.Parameters.Add(p1);
+                var p2 = c3a.CreateParameter(); p2.ParameterName = "@sid"; p2.Value = studentId; c3a.Parameters.Add(p2);
+                var p3 = c3a.CreateParameter(); p3.ParameterName = "@now"; p3.Value = now; c3a.Parameters.Add(p3);
+                heldActive = (long)(await c3a.ExecuteScalarAsync(ct) ?? 0L);
             }
 
-            if (already > 0)
+            long confirmedActive;
+            await using (var c3b = conn.CreateCommand())
+            {
+                c3b.Transaction = tx;
+                c3b.CommandText = "SELECT COUNT(*) FROM holds WHERE \"ClassId\" = @cid AND \"StudentId\" = @sid AND \"Status\" = 'CONFIRMED'";
+                var p1 = c3b.CreateParameter(); p1.ParameterName = "@cid"; p1.Value = classId; c3b.Parameters.Add(p1);
+                var p2 = c3b.CreateParameter(); p2.ParameterName = "@sid"; p2.Value = studentId; c3b.Parameters.Add(p2);
+                confirmedActive = (long)(await c3b.ExecuteScalarAsync(ct) ?? 0L);
+            }
+
+            if (heldActive > 0)
+                throw new ApiException(ErrorCodes.AlreadyApplied, "You are on hold in this class.", 409);
+            if (confirmedActive > 0)
                 throw new ApiException(ErrorCodes.AlreadyApplied, "You have already applied to this class.", 409);
 
             var holdId = NewHoldId();

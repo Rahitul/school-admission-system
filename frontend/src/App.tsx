@@ -131,6 +131,12 @@ export default function App() {
   const activeClassIds = new Set(
     myHolds.filter(h => h.status === 'HELD' || h.status === 'CONFIRMED').map(h => h.classId)
   )
+  const heldClassIds = new Set(
+    myHolds.filter(h => h.status === 'HELD').map(h => h.classId)
+  )
+  const confirmedClassIds = new Set(
+    myHolds.filter(h => h.status === 'CONFIRMED').map(h => h.classId)
+  )
 
   const handleApply = async (classId: string) => {
     if (!isValidStudentId(studentId)) {
@@ -227,7 +233,8 @@ export default function App() {
                     >
                       {APPLY_LABEL}
                     </button>
-                    {already && <small>You already applied to this class.</small>}
+                    {heldClassIds.has(c.id) && <small>You are on hold in this class.</small>}
+                    {confirmedClassIds.has(c.id) && !heldClassIds.has(c.id) && <small>You have already applied to this class.</small>}
                     {c.availableSeats <= 0 && <small>No seats left.</small>}
                   </div>
                 )
