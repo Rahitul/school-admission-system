@@ -36,7 +36,7 @@ async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
   try {
     res = await fetch(API_BASE + path, { ...options, headers })
   } catch {
-    throw new Error('Cannot reach the server. / সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না।')
+    throw new Error('Cannot reach the server.')
   }
   if (!res.ok) {
     let msg = `Request failed (${res.status})`
@@ -58,13 +58,13 @@ function isValidStudentId(v: string) {
   return /^\d{17}$/.test(v)
 }
 
-const BIRTH_LABEL = '\u099c\u09a8\u09cd\u09ae \u09a8\u09bf\u09ac\u09a8\u09cd\u09a7\u09a8 \u09a8\u09ae\u09cd\u09ac\u09b0 (17 digits): '
-const BIRTH_ERROR = '\u099c\u09a8\u09cd\u09ae \u09a8\u09bf\u09ac\u09a8\u09cd\u09a7\u09a8 \u09a8\u09ae\u09cd\u09ac\u09b0 \u09e7\u09ed \u0985\u0999\u09cd\u0995\u09c7\u09b0 \u09b9\u09a4\u09c7 \u09b9\u09ac\u09c7\u0964'
-const APPLY_LABEL = '\u0986\u09ac\u09c7\u09a6\u09a8 \u0995\u09b0\u09c1\u09a8'
-const PAY_LABEL = '\u09ad\u09b0\u09cd\u09a4\u09bf \u09ab\u09bf \u09a6\u09bf\u09a8'
-const CANCEL_LABEL = '\u09ac\u09be\u09a4\u09bf\u09b2'
-const PAY_SUCCESS = '\u09aa\u09c7\u09ae\u09c7\u09a8\u09cd\u099f \u09b8\u09ab\u09b2 \u09b9\u09af\u09bc\u09c7\u099b\u09c7\u0964 \u09ad\u09b0\u09cd\u09a4\u09bf \u09a8\u09bf\u09b6\u09cd\u099a\u09bf\u09a4 \u09b9\u09af\u09bc\u09c7\u099b\u09c7\u0964'
-const CANCEL_SUCCESS = '\u0986\u09ac\u09c7\u09a6\u09a8 \u09ac\u09be\u09a4\u09bf\u09b2 \u0995\u09b0\u09be \u09b9\u09af\u09bc\u09c7\u099b\u09c7\u0964'
+const BIRTH_LABEL = 'Birth registration number (17 digits): '
+const BIRTH_ERROR = 'Birth registration number must be 17 digits.'
+const APPLY_LABEL = 'Apply'
+const PAY_LABEL = 'Pay admission fee'
+const CANCEL_LABEL = 'Cancel'
+const PAY_SUCCESS = 'Payment successful. Admission confirmed.'
+const CANCEL_SUCCESS = 'Application cancelled.'
 
 export default function App() {
   const [studentId, setStudentId] = useState(() => localStorage.getItem('studentId') || '')
@@ -84,7 +84,7 @@ export default function App() {
   const saveStudentId = () => {
     const v = studentInput.trim()
     if (!isValidStudentId(v)) {
-      setStudentError(BIRTH_ERROR + ' (Birth registration number must be 17 digits.)')
+      setStudentError(BIRTH_ERROR)
       return
     }
     setStudentError('')
