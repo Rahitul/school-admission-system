@@ -39,8 +39,7 @@ var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL")
     ?? "Host=localhost;Port=5432;Database=school_admission;Username=postgres;Password=postgres";
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(connectionString, npgsql =>
-        npgsql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(2), null)));
+    options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<AdmissionService>();
 builder.Services.AddHostedService<ExpirySweeper>();
