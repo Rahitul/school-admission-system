@@ -33,3 +33,14 @@ public record MyHoldResponse(
     string ClassName,
     string Status,
     DateTime ExpiresAt);
+
+public record StudentHoldSummary(
+    string HoldId,
+    string ClassId,
+    string ClassName,
+    string Status,
+    DateTime ExpiresAt);
+
+public record StudentSummaryResponse(
+    string StudentId,
+    List<StudentHoldSummary> Holds);

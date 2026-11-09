@@ -28,6 +28,19 @@ type MyHold = {
   expiresAt: string
 }
 
+type StudentHold = {
+  holdId: string
+  classId: string
+  className: string
+  status: string
+  expiresAt: string
+}
+
+type StudentSummary = {
+  studentId: string
+  holds: StudentHold[]
+}
+
 type ApiError = { error?: { code?: string; message?: string } }
 
 async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -70,9 +83,10 @@ export default function App() {
   const [studentId, setStudentId] = useState(() => localStorage.getItem('studentId') || '')
   const [studentInput, setStudentInput] = useState(studentId)
   const [studentError, setStudentError] = useState('')
-  const [tab, setTab] = useState<'classes' | 'mine' | 'create'>('classes')
+  const [tab, setTab] = useState<'classes' | 'mine' | 'create' | 'students'>('classes')
   const [classes, setClasses] = useState<ClassSummary[]>([])
   const [myHolds, setMyHolds] = useState<MyHold[]>([])
+  const [students, setStudents] = useState<StudentSummary[]>([])
   const [selectedHoldId, setSelectedHoldId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
@@ -113,12 +127,28 @@ export default function App() {
     }
   }, [])
 
+  const loadStudents = useCallback(async () => {
+    try {
+      const data = await api<StudentSummary[]>('/students')
+      setStudents(data)
+    } catch (e: unknown) {
+      setError((e as Error)?.message || 'Cannot reach the server.')
+    }
+  }, [])
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadClasses()
     const t = setInterval(loadClasses, 4000)
     return () => clearInterval(t)
   }, [loadClasses])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadStudents()
+    const t = setInterval(loadStudents, 5000)
+    return () => clearInterval(t)
+  }, [loadStudents])
 
   useEffect(() => {
     if (isValidStudentId(studentId)) {
@@ -211,6 +241,7 @@ export default function App() {
         <button className={tab === 'classes' ? 'active' : ''} onClick={() => setTab('classes')}>Classes</button>
         <button className={tab === 'mine' ? 'active' : ''} onClick={() => setTab('mine')}>My Applications</button>
         <button className={tab === 'create' ? 'active' : ''} onClick={() => setTab('create')}>Create Class</button>
+        <button className={tab === 'students' ? 'active' : ''} onClick={() => setTab('students')}>Students</button>
       </nav>
 
       <main>
@@ -254,6 +285,28 @@ export default function App() {
                   <span>Status: {h.status}</span>
                   <span>Expires: {new Date(h.expiresAt).toLocaleString()}</span>
                   <button onClick={() => setSelectedHoldId(h.holdId)}>View</button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {tab === 'students' && (
+          <section>
+            {students.length === 0 && <p>No students yet.</p>}
+            <ul className="hold-list">
+              {students.map((s) => (
+                <li key={s.studentId} style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <strong>Student ID: {s.studentId}</strong>
+                  <ul className="hold-list" style={{ width: '100%', marginTop: 6 }}>
+                    {s.holds.map((h) => (
+                      <li key={h.holdId}>
+                        <span>{h.className}</span>
+                        <span>Status: {h.status}</span>
+                        <span>Expires: {new Date(h.expiresAt).toLocaleString()}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </li>
               ))}
             </ul>

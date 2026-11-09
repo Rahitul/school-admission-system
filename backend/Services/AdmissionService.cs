@@ -325,6 +325,32 @@ public class AdmissionService
         _logger.LogInformation("Hold cancelled {HoldId}", holdId);
     }
 
+    public async Task<List<StudentSummaryResponse>> GetStudentsAsync(CancellationToken ct)
+    {
+        var now = DateTime.UtcNow;
+        var holds = await _db.Holds.AsNoTracking().OrderByDescending(h => h.CreatedAt).ToListAsync(ct);
+        var classIds = holds.Select(h => h.ClassId).Distinct().ToList();
+        var classes = await _db.Classes.AsNoTracking()
+            .Where(c => classIds.Contains(c.Id))
+            .ToDictionaryAsync(c => c.Id, c => c.Name, ct);
+
+        var grouped = holds
+            .GroupBy(h => h.StudentId)
+            .Select(g => new StudentSummaryResponse(
+                g.Key,
+                g.Select(h =>
+                {
+                    var status = h.Status;
+                    if (status == "HELD" && h.ExpiresAt <= now) status = "EXPIRED";
+                    var className = classes.TryGetValue(h.ClassId, out var n) ? n : h.ClassId;
+                    return new StudentHoldSummary(h.Id, h.ClassId, className, status, h.ExpiresAt);
+                }).ToList()))
+            .OrderBy(s => s.StudentId)
+            .ToList();
+
+        return grouped;
+    }
+
     public async Task<List<MyHoldResponse>> GetMyHoldsAsync(string studentId, CancellationToken ct)
     {
         if (!IsValidStudentId(studentId))
