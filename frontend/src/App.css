@@ -20,3 +20,22 @@
 .close { position: absolute; top: 8px; right: 8px; }
 .actions { display: flex; gap: 8px; margin-top: 12px; }
 .err { color: #b00020; }
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  .app { padding: 10px; }
+  .header { gap: 6px; }
+  .student-box { flex-direction: column; align-items: stretch; }
+  .student-box input { min-width: 0; width: 100%; }
+  .student-box button { width: 100%; }
+  .nav { flex-wrap: wrap; }
+  .nav button { flex: 1 1 30%; }
+  .class-grid { grid-template-columns: 1fr; }
+  .class-card { padding: 10px; }
+  .hold-list li { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .modal-content { min-width: 0; width: 90vw; max-width: 90vw; padding: 16px; }
+  .actions { flex-wrap: wrap; }
+  .actions button { flex: 1 1 45%; }
+  .form { max-width: 100%; }
+  .form input { width: 100%; box-sizing: border-box; }
+}
