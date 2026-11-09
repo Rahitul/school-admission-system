@@ -39,18 +39,32 @@ var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL")
     ?? "Host=localhost;Port=5432;Database=school_admission;Username=postgres;Password=postgres";
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(connectionString, npgsql =>
+        npgsql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(2), null)));
 
 builder.Services.AddScoped<AdmissionService>();
 builder.Services.AddHostedService<ExpirySweeper>();
 
 var app = builder.Build();
 
-// Ensure schema
+// Ensure schema (retry for transient DNS/DB startup issues)
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.EnsureCreated();
+    for (var i = 0; i < 10; i++)
+    {
+        try
+        {
+            db.Database.EnsureCreated();
+            break;
+        }
+        catch (Exception ex)
+        {
+            if (i == 9) throw;
+            Console.WriteLine($"DB not ready yet ({ex.Message}), retrying in 2s...");
+            await Task.Delay(2000);
+        }
+    }
 }
 
 app.UseMiddleware<ExceptionMiddleware>();
