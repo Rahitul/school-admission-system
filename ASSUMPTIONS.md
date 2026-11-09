@@ -1,165 +1,170 @@
 # Assumptions
 
-Each item below is a gap in the brief (PRD Section 21) with the decision taken
-and the reason. A-01 ... A-26 are the exact gaps the PRD asks the candidate to
-cover; A-27+ are extra decisions made during implementation.
+This file lists the things the brief did not state clearly and what I decided
+for each, with a short reason. The PRD (Section 21) gives the full list of gaps
+(A-01 to A-26); I added a few more (A-27 onwards) for decisions I made while
+building.
+
+I tried to keep these decisions simple and close to what a Bangladeshi school
+admission system actually needs.
 
 ---
 
 ## A-01 Deadline time zone
-Decision: Bangladesh Standard Time (UTC+6).
-Why: The brief states "11 November 2026, 11:59:59 PM" with no time zone.
-Bangladesh Standard Time is the natural reading for a Bangladeshi assignment,
-and submitting early removes any ambiguity.
+I assumed Bangladesh Standard Time (UTC+6).
+Reason: the brief says "11 November 2026, 11:59:59 PM" but no time zone. Since
+this is a local assignment, BST is the sensible reading. I also submitted early
+to be safe.
 
 ## A-02 Identity and login
-Decision: No login. Student identity = X-Student-Id header only.
-Why: The brief explicitly says "no login, no authentication" (NG-2). Anyone
-who knows the 17-digit number can act as that student; acceptable for this
-scope, but a real system would need authentication.
+No login at all. The student is identified only by the X-Student-Id header.
+Reason: the brief clearly says no login and no authentication (NG-2). Anyone who
+knows the 17-digit number can act as that student, which is acceptable for
+this scope.
 
 ## A-03 School admin access
-Decision: No admin login or role; admin screens are open.
-Why: NG-5 states no admin authentication or RBAC. Keeping it open matches the
-brief and avoids building an auth system that is out of scope.
+No admin login or role. Admin screens are open to everyone.
+Reason: NG-5 says no admin authentication or RBAC. Building auth would be out
+of scope, so I left it open.
 
 ## A-04 Payment
-Decision: Simulated; clicking "Pay admission fee" = success.
-Why: NG-1 forbids a real payment gateway. The button calls confirm directly,
-as the brief instructs.
+Payment is fake. Clicking "Pay admission fee" counts as success.
+Reason: NG-1 forbids a real payment gateway. The button just calls the confirm
+endpoint directly, as the brief instructs.
 
 ## A-05 Multiple shifts
-Decision: A student may hold one application per class; multiple shifts allowed.
-Why: The brief's rule is per class ("একটা class-এ"), so Morning and Day shift
-classes are independent pools and can both be held at once.
+A student can hold one application in each class. Morning and Day shift are
+separate classes, so both can be held at the same time.
+Reason: the brief's rule is per class ("একটা class-এ"), not per student overall.
 
 ## A-06 Class name uniqueness
-Decision: Reject duplicate class names (case-insensitive) with 409
-DUPLICATE_CLASS_NAME.
-Why: Prevents two identical "Class 6 - Morning Shift" entries that would
-confuse admins and tests. Case-insensitive match avoids "Class 6" vs "class 6".
+I reject duplicate class names (case-insensitive) with a 409 error.
+Reason: two "Class 6 - Morning Shift" entries would confuse the admin and the
+tests. Case-insensitive check stops "Class 6" and "class 6" being treated as
+different.
 
 ## A-07 Cancel rules
-Decision: Only HELD holds can be cancelled.
-Why: The brief lists cancel only for applications (holds). CONFIRMED admissions
-are terminal and cannot be withdrawn through this API (409 INVALID_STATE).
+Only a HELD hold can be cancelled.
+Reason: the brief only mentions cancelling applications. A confirmed admission
+is final and cannot be withdrawn through this API.
 
 ## A-08 Owner mismatch status code
-Decision: 403 Forbidden (NOT_OWNER).
-Why: The brief's status-code table lists 403 for "hold belongs to another
-student". Some designs hide existence with 404, but 403 matches the contract.
+I return 403 Forbidden when someone else's hold is touched.
+Reason: the status-code table in the brief lists 403 for "hold belongs to
+another student". Some people use 404 to hide existence, but 403 matches the
+contract.
 
 ## A-09 Error body format
-Decision: {"error":{"code","message"}}.
-Why: The brief does not define an error body (Section 12.1). This shape is
-machine-readable for tests and human-readable for the UI.
+Errors look like {"error": {"code": "...", "message": "..."}}.
+Reason: the brief does not define an error body (Section 12.1). This shape is
+easy for the tests to check and easy for the UI to show.
 
 ## A-10 GET /holds/{id} needs no X-Student-Id
-Decision: As written in the brief.
-Why: The brief specifies no header for this endpoint, so anyone with the holdId
-can view its status. Acceptable for this scope (NG-2).
+As written in the brief.
+Reason: the brief specifies no header for this endpoint, so anyone with the
+holdId can see its status. Fine for this scope (NG-2).
 
 ## A-11 Hold ID and class ID format
-Decision: Prefixed GUIDs (c_..., h_...).
-Why: The brief says ID formats are examples only. Prefixed GUIDs are unique,
-opaque to clients, and easy to read in logs.
+I use prefixed GUIDs like c_... and h_...
+Reason: the brief says ID formats are examples only. Prefixed GUIDs are unique
+and easy to read in logs.
 
 ## A-12 Scope boundaries
-Decision: Single school, single academic year.
-Why: NG-7 excludes multi-school support unless free. Keeping one school keeps
-the model simple.
+Single school, single academic year.
+Reason: NG-7 excludes multi-school support unless it comes free. Keeping one
+school keeps the model simple.
 
 ## A-13 Hold duration default and units
-Decision: HOLD_DURATION_SECONDS, default 600, positive integer seconds.
-Why: Matches the brief's default (600 s = 10 min). Invalid or non-positive
-values fall back to 600 to avoid a broken hold.
+HOLD_DURATION_SECONDS, default 600, in seconds, must be positive.
+Reason: matches the brief's default (600 s = 10 minutes). Bad or non-positive
+values fall back to 600 so a hold never breaks.
 
 ## A-14 Expiry mechanism
-Decision: Lazy evaluation plus a background sweeper every 5 s.
-Why: BR-2 requires the seat to be free as soon as expiresAt passes without any
-client call. Lazy evaluation guarantees correctness even without the sweeper;
-the sweeper keeps stored statuses accurate for reporting.
+Lazy evaluation plus a background sweeper every 5 seconds.
+Reason: BR-2 says the seat must be free as soon as the time is over, with no
+client call. Lazy evaluation guarantees correctness even if the sweeper is
+not running; the sweeper keeps stored statuses tidy for reporting.
 
 ## A-15 Seat-count freshness in UI
-Decision: Polling every few seconds (classes 4 s, holds 4-5 s).
-Why: The brief explicitly allows polling and does not require WebSockets.
-Simpler and sufficient for school-scale load.
+Polling every few seconds (classes every 4 s, holds every 4-5 s).
+Reason: the brief allows polling and does not require WebSockets. Simpler and
+enough for a school.
 
 ## A-16 Student ID validation
-Decision: Exactly 17 ASCII digits, leading zeros allowed.
-Why: The brief defines a 17-digit birth registration number. ASCII-only avoids
-Unicode digit tricks and keeps backend/frontend validation consistent.
+Exactly 17 ASCII digits, leading zeros allowed.
+Reason: the brief defines a 17-digit birth registration number. ASCII-only
+avoids Unicode digit tricks and keeps backend and frontend in sync.
 
 ## A-17 Persistence of UI student ID
-Decision: Stored in browser localStorage.
-Why: Required by UI-4 so the student still sees their applications after
-refresh or browser restart, without a login system.
+Stored in the browser's localStorage.
+Reason: required by UI-4 so the student still sees their applications after a
+refresh or reopening the browser, without any login system.
 
 ## A-18 Seed data
-Decision: No seed data; admin creates classes via the UI.
-Why: The brief says seed data is optional (A-18). Admin can create classes
-from the UI with no manual DB step, satisfying NFR-4.
+No seed data. The admin creates classes from the UI.
+Reason: the brief says seed data is optional. The admin can create classes
+from the UI with no manual database step, which satisfies NFR-4.
 
 ## A-19 Language of UI and messages
-Decision: English throughout (originally Bengali/English mix).
-Why: The brief prefers Bengali but accepts English if clear. English keeps
-the codebase and tests simple and avoids encoding issues.
+All UI text is in English.
+Reason: the brief prefers Bengali but accepts English if clear. English keeps
+the codebase and tests simple and avoids encoding problems.
 
 ## A-20 Hold for a class with zero seats
-Decision: Rejected with 409 NO_SEATS.
-Why: BR-1 forbids held+confirmed exceeding totalSeats; a full class must
-reject new holds explicitly.
+Rejected with 409 NO_SEATS.
+Reason: BR-1 forbids held + confirmed exceeding totalSeats, so a full class
+must reject new applications outright.
 
 ## A-21 Re-application after expiry
-Decision: Allowed; an EXPIRED or CANCELLED hold does not block a new hold.
-Why: BR-3 states only HELD/CONFIRMED block. Expired holds are flipped to
+Allowed. An EXPIRED or CANCELLED hold does not block a new one.
+Reason: BR-3 says only HELD or CONFIRMED block. Expired holds are flipped to
 EXPIRED lazily so they stop occupying a seat and stop blocking re-application.
 
 ## A-22 Repeated confirm response
-Decision: 200 with CONFIRMED each time, no double count.
-Why: BR-5 requires idempotent confirmation. The conditional UPDATE affects 0
-rows on repeat, so confirmedSeats increases only once.
+200 with CONFIRMED each time, no double count.
+Reason: BR-5 requires idempotent confirmation. The conditional UPDATE affects
+0 rows on repeat, so confirmedSeats increases only once.
 
 ## A-23 Concurrency approach
-Decision: PostgreSQL row lock (SELECT ... FOR UPDATE) on the class row.
-Why: BR-1 must hold even across multiple backend processes sharing one DB
-(bonus requirement). An in-memory lock (Option D) would fail across processes,
-so protection must live in the database.
+PostgreSQL row lock (SELECT ... FOR UPDATE) on the class row.
+Reason: BR-1 must hold even when two backend processes share one database (the
+bonus requirement). An in-memory lock would fail across processes, so the
+protection must live in the database.
 
 ## A-24 Database migrations or schema creation
-Decision: Schema created automatically on startup via EnsureCreated.
-Why: NFR-4 requires a clean "docker compose up" with no manual steps. For this
-schema, EnsureCreated is sufficient; migrations would be needed only if the
-schema evolved after release.
+Schema is created automatically on startup via EnsureCreated.
+Reason: NFR-4 needs a clean "docker compose up" with no manual steps. For this
+schema EnsureCreated is enough; migrations would only matter if the schema
+changed later.
 
 ## A-25 CORS
-Decision: Backend allows the frontend origin (and any origin in dev).
-Why: The browser calls the API directly from http://localhost:3000, so CORS
-must allow it (A-25). CORS_ORIGINS env var lets reviewers restrict it.
+The backend allows the frontend origin (any origin in dev).
+Reason: the browser calls the API directly from http://localhost:3000, so CORS
+must allow it (A-25). The CORS_ORIGINS env var lets reviewers restrict it.
 
 ## A-26 Scale assumption
-Decision: Designed for school-sized load (hundreds of concurrent applicants).
-Why: NFR-5 targets dozens to hundreds of concurrent users, not internet scale.
-Connection pool and DB limits were tuned (max_connections=300, pool size=200)
-to satisfy the concurrency test.
+Designed for school-sized load (hundreds of concurrent applicants).
+Reason: NFR-5 targets dozens to hundreds of concurrent users, not internet
+scale. I tuned the connection pool (max_connections=300, pool size=200) so
+the concurrency test passes.
 
 ## A-27 Student list (extra)
-Decision: Added a "Students" tab and GET /students endpoint listing each
-student ID with their classes and statuses.
-Why: Requested by the user as an admin-style overview. It does not change the
-PRD's 8-endpoint contract; it is an additive convenience view.
+Added a "Students" tab and a GET /students endpoint listing each student ID
+with their classes and statuses.
+Reason: the user asked for an admin-style overview. It does not change the
+PRD's 8-endpoint contract; it is just an extra view.
 
 ## A-28 Mobile responsiveness (extra)
-Decision: Added responsive CSS at <=640px.
-Why: NG-6 makes mobile optional, but a few media queries improve usability on
-phones at no cost.
+Added responsive CSS for screens up to 640px wide.
+Reason: NG-6 makes mobile optional, but a few media queries improve usability
+on phones at no real cost.
 
 ## A-29 UI language (extra)
-Decision: All UI text is in English.
-Why: The brief prefers Bengali but accepts English if clear. English keeps the
-codebase and automated tests simple and avoids encoding issues.
+All UI text is in English.
+Reason: the brief prefers Bengali but accepts English if clear. English keeps
+the codebase and tests simple and avoids encoding problems.
 
 ## A-30 Root path redirect (extra)
-Decision: "/" redirects to "/swagger".
-Why: The backend is an API with no landing page; redirecting avoids a bare 404
-and helps reviewers find the documentation.
+"/" redirects to "/swagger".
+Reason: the backend is an API with no landing page. Redirecting avoids a bare
+404 and helps reviewers find the documentation.
