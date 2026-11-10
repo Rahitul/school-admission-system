@@ -1,6 +1,7 @@
 ## 01 Identity and login
 No login at all. The student is identified only by the X-Student-Id header.
-Reason: the brief clearly says no login and no authentication. Anyone who knows the 17-digit number can act as that student, which is acceptable for this scope.
+Reason: the brief clearly says no login and no authentication. Anyone who knows the 17-digit number can act as that student, 
+which is acceptable for this scope.
 
 ## 02 School admin access
 No admin login or role. Admin screens are open to everyone.
@@ -11,7 +12,7 @@ Payment is fake. Clicking "Pay admission fee" counts as success.
 Reason: In pdf forbids a real payment gateway. The button just calls the confirm endpoint directly, as the brief instructs.
 
 ## 04 Multiple shifts
-A student can hold one application in each class. Morning and Day shift are separate classes, so both can be held at the same time.
+A student can hold one application in each class. Morning and Day shift are eparate classes, so both can be held at the same time.
 Reason: the brief's rule is per class, not per student overall.
 
 ## 05 Class name uniqueness
@@ -40,7 +41,8 @@ Reason: matches the brief's default (600 s = 10 minutes). Bad or non-positive va
 
 ## 11 Expiry mechanism
 Lazy evaluation plus a background sweeper every 5 seconds.
-Reason: In the doc says the seat must be free as soon as the time is over, with no client call. Lazy evaluation guarantees correctness even if the sweeper is not running; the sweeper keeps stored statuses tidy for reporting.
+Reason: In the doc says the seat must be free as soon as the time is over, with no client call. Lazy evaluation guarantees 
+correctness even if the sweeper is not running; the sweeper keeps stored statuses tidy for reporting.
 
 ## 12 Seat-count freshness in UI
 Polling every few seconds (classes every 4 s, holds every 4-5 s).
@@ -72,7 +74,8 @@ Reason: requires idempotent confirmation. The conditional UPDATE affects 0 rows 
 
 ## 19 Database migrations or schema creation
 Schema is created automatically on startup via EnsureCreated.
-Reason: needs a clean "docker compose up" with no manual steps. For this schema EnsureCreated is enough; migrations would only matter if the schema changed later.
+Reason: needs a clean "docker compose up" with no manual steps. For this schema EnsureCreated is enough; migrations would only matter if the schema
+changed later.
 
 ## 20 Scale assumption
 Designed for school-sized load (hundreds of concurrent applicants).
@@ -86,66 +89,42 @@ Reason: the user asked for an admin-style overview. It does not change the PRD's
 Added responsive CSS for screens up to 640px wide.
 Reason: makes mobile optional, but a few media queries improve usability on phones at no real cost.
 
-## 23 Deadline time zone
-Assumed Bangladesh Standard Time (UTC+6).
-Reason: the brief says "11 November 2026, 11:59:59 PM" but no time zone. BST is the natural reading for a local assignment.
-
-## 24 Owner mismatch status code
+## 23 Owner mismatch status code
 Use 403 NOT_OWNER when another student's hold is touched.
 Reason: the status-code table in the brief lists 403 for "hold belongs to another student".
 
-## 25 Seat limits
+## 24 Seat limits
 totalSeats must be an integer from 1 to 10000.
 Reason: keeps a class size realistic and matches the brief's intent.
 
-## 26 CORS
-Backend allows http://localhost:3000 and http://localhost:5173.
-Reason: the browser calls the API directly from those origins, so CORS must allow them.
-
-## 27 Concurrency approach
+## 25 Concurrency approach
 Row lock (SELECT ... FOR UPDATE) plus a partial unique index.
 Reason: the lock must live in the database so it also works across two backend processes sharing one database (the bonus). An in-memory lock would fail across processes.
 
-## 28 Scope
+## 26 Scope
 One school, one academic year.
 Reason: multi-school support is out of scope unless it comes free.
 
-## 29 Language
-Primary UI language is English (originally Bengali in the brief).
-Reason: the brief prefers Bengali but accepts English if clear. English keeps the codebase and tests simple.
-
-## 30 Expiry storage
+## 27 Expiry storage
 Expired holds are kept in the database with status EXPIRED; not deleted.
 Reason: keeps history for reporting and avoids losing records.
 
-## 31 Confirm racing with expiry
+## 28 Confirm racing with expiry
 If confirm and expiry happen at the same moment, the conditional UPDATE decides. Final state is either CONFIRMED or HOLD_EXPIRED, never both.
 Reason: the conditional UPDATE (status = HELD AND expires_at > now) makes the outcome deterministic.
 
-## 32 Confirm does not change held + confirmed
+## 29 Confirm does not change held + confirmed
 Confirm moves one seat from held to confirmed, so the invariant is not at risk from confirm.
 Reason: the count is derived from status, so it cannot be double-counted.
 
-## 33 No pagination
+## 30 No pagination
 GET /classes returns the full list.
 Reason: a school-sized list is small; pagination adds complexity for no benefit here.
 
-## 34 Frontend Docker config method
+## 31 Frontend Docker config method
 Option 2: VITE_API_BASE_URL is passed as a Docker build argument. Changing it requires "docker compose up --build".
 Reason: simpler than runtime config; documented in README so reviewers know to rebuild.
 
-## 35 Time display
-Stored and sent in UTC; shown in local time in the UI.
-Reason: avoids time-zone confusion between server and browser.
-
-## 36 Hold and application are the same object
-One table named "holds"; the UI calls it an application (আবেদন).
+## 32 Hold and application are the same object
+One table named "holds"; the UI calls it an application.
 Reason: the glossary says they are the same record.
-
-## 37 Bonus two-process check
-Two backend processes on different ports sharing one PostgreSQL database still respect the seat limit because the lock is in the database.
-Reason: documented here as required by the bonus scenario.
-
-## 38 Check order for POST holds
-ALREADY_APPLIED is checked before NO_SEATS.
-Reason: matches v2 Section 11.3 so the correct error code is returned when both conditions apply.
