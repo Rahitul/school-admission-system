@@ -51,6 +51,12 @@ cd frontend && npm test
 ```
 (Frontend tests are a bonus; included as a basic smoke test.)
 
+## Frontend configuration in Docker
+The frontend uses Vite, so VITE_API_BASE_URL is replaced at build time. This project
+uses Option 2 from the PRD (Section 17.3): the value is passed as a Docker build
+argument in docker-compose.yml. If you change it, rebuild with:
+  docker compose up --build
+
 ## Project structure
 ```
 backend/        .NET 8 Web API, EF Core, PostgreSQL, tests

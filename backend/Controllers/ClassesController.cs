@@ -23,8 +23,8 @@ public class ClassesController : ControllerBase
         if (string.IsNullOrWhiteSpace(name))
             throw new ApiException(ErrorCodes.InvalidInput, "Class name is required.", 400);
 
-        if (request.TotalSeats is null || request.TotalSeats < 1)
-            throw new ApiException(ErrorCodes.InvalidInput, "Total seats must be at least 1.", 400);
+        if (request.TotalSeats is null || request.TotalSeats < 1 || request.TotalSeats > 10000)
+            throw new ApiException(ErrorCodes.InvalidInput, "Total seats must be between 1 and 10000.", 400);
 
         var result = await _svc.CreateClassAsync(name, request.TotalSeats.Value, ct);
         return Created($"/classes/{result.Id}", result);

@@ -89,7 +89,62 @@ Reason: the user asked for an admin-style overview. It does not change the PRD's
 Added responsive CSS for screens up to 640px wide.
 Reason: makes mobile optional, but a few media queries improve usability on phones at no real cost.
 
-## 23 Root path redirect (extra)
-"/" redirects to "/swagger".
-Reason: the backend is an API with no landing page. Redirecting avoids a bare
-404 and helps reviewers find the documentation.
+## 23 Deadline time zone
+Assumed Bangladesh Standard Time (UTC+6).
+Reason: the brief says "11 November 2026, 11:59:59 PM" but no time zone. BST is the natural reading for a local assignment.
+
+## 24 Owner mismatch status code
+Use 403 NOT_OWNER when another student's hold is touched.
+Reason: the status-code table in the brief lists 403 for "hold belongs to another student".
+
+## 25 Seat limits
+totalSeats must be an integer from 1 to 10000.
+Reason: keeps a class size realistic and matches the brief's intent.
+
+## 26 CORS
+Backend allows http://localhost:3000 and http://localhost:5173.
+Reason: the browser calls the API directly from those origins, so CORS must allow them.
+
+## 27 Concurrency approach
+Row lock (SELECT ... FOR UPDATE) plus a partial unique index.
+Reason: the lock must live in the database so it also works across two backend processes sharing one database (the bonus). An in-memory lock would fail across processes.
+
+## 28 Scope
+One school, one academic year.
+Reason: multi-school support is out of scope unless it comes free.
+
+## 29 Language
+Primary UI language is English (originally Bengali in the brief).
+Reason: the brief prefers Bengali but accepts English if clear. English keeps the codebase and tests simple.
+
+## 30 Expiry storage
+Expired holds are kept in the database with status EXPIRED; not deleted.
+Reason: keeps history for reporting and avoids losing records.
+
+## 31 Confirm racing with expiry
+If confirm and expiry happen at the same moment, the conditional UPDATE decides. Final state is either CONFIRMED or HOLD_EXPIRED, never both.
+Reason: the conditional UPDATE (status = HELD AND expires_at > now) makes the outcome deterministic.
+
+## 32 Confirm does not change held + confirmed
+Confirm moves one seat from held to confirmed, so the invariant is not at risk from confirm.
+Reason: the count is derived from status, so it cannot be double-counted.
+
+## 33 No pagination
+GET /classes returns the full list.
+Reason: a school-sized list is small; pagination adds complexity for no benefit here.
+
+## 34 Frontend Docker config method
+Option 2: VITE_API_BASE_URL is passed as a Docker build argument. Changing it requires "docker compose up --build".
+Reason: simpler than runtime config; documented in README so reviewers know to rebuild.
+
+## 35 Time display
+Stored and sent in UTC; shown in local time in the UI.
+Reason: avoids time-zone confusion between server and browser.
+
+## 36 Hold and application are the same object
+One table named "holds"; the UI calls it an application (আবেদন).
+Reason: the glossary says they are the same record.
+
+## 37 Bonus two-process check
+Two backend processes on different ports sharing one PostgreSQL database still respect the seat limit because the lock is in the database.
+Reason: documented here as required by the bonus scenario.

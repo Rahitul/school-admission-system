@@ -198,7 +198,7 @@ export default function App() {
     const name = (form.elements.namedItem('name') as HTMLInputElement).value.trim()
     const seats = parseInt((form.elements.namedItem('seats') as HTMLInputElement).value, 10)
     if (!name) { setError('Class name is required.'); return }
-    if (!seats || seats < 1) { setError('Total seats must be at least 1.'); return }
+    if (!seats || seats < 1 || seats > 10000) { setError('Total seats must be between 1 and 10000.'); return }
     setLoading(true)
     setError('')
     setMessage('')
@@ -317,7 +317,7 @@ export default function App() {
           <section>
             <form onSubmit={handleCreateClass} className="form">
               <label>Class name: <input name="name" required /></label>
-              <label>Total seats: <input name="seats" type="number" min={1} required /></label>
+              <label>Total seats: <input name="seats" type="number" min={1} max={10000} required /></label>
               <button type="submit" disabled={loading}>Create class</button>
             </form>
           </section>

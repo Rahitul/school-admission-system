@@ -39,8 +39,8 @@ public class AdmissionService
         name = name.Trim();
         if (string.IsNullOrWhiteSpace(name))
             throw new ApiException(ErrorCodes.InvalidInput, "Class name is required.", 400);
-        if (totalSeats < 1)
-            throw new ApiException(ErrorCodes.InvalidInput, "Total seats must be at least 1.", 400);
+        if (totalSeats < 1 || totalSeats > 10000)
+            throw new ApiException(ErrorCodes.InvalidInput, "Total seats must be between 1 and 10000.", 400);
 
         var exists = await _db.Classes.AnyAsync(c => c.Name.ToLower() == name.ToLower(), ct);
         if (exists)
@@ -133,28 +133,7 @@ public class AdmissionService
                 await exp.ExecuteNonQueryAsync(ct);
             }
 
-            long heldCount;
-            await using (var c1 = conn.CreateCommand())
-            {
-                c1.Transaction = tx;
-                c1.CommandText = "SELECT COUNT(*) FROM holds WHERE \"ClassId\" = @cid AND \"Status\" = 'HELD' AND \"ExpiresAt\" > @now";
-                var p1 = c1.CreateParameter(); p1.ParameterName = "@cid"; p1.Value = classId; c1.Parameters.Add(p1);
-                var p2 = c1.CreateParameter(); p2.ParameterName = "@now"; p2.Value = now; c1.Parameters.Add(p2);
-                heldCount = (long)(await c1.ExecuteScalarAsync(ct) ?? 0L);
-            }
-
-            long confirmedCount;
-            await using (var c2 = conn.CreateCommand())
-            {
-                c2.Transaction = tx;
-                c2.CommandText = "SELECT COUNT(*) FROM holds WHERE \"ClassId\" = @cid AND \"Status\" = 'CONFIRMED'";
-                var p = c2.CreateParameter(); p.ParameterName = "@cid"; p.Value = classId; c2.Parameters.Add(p);
-                confirmedCount = (long)(await c2.ExecuteScalarAsync(ct) ?? 0L);
-            }
-
-            if (heldCount + confirmedCount >= totalSeats)
-                throw new ApiException(ErrorCodes.NoSeats, "No seats are left in this class.", 409);
-
+            // BR-3 check first (v2 Section 11.3 order): already applied?
             long heldActive;
             await using (var c3a = conn.CreateCommand())
             {
@@ -181,6 +160,29 @@ public class AdmissionService
             if (confirmedActive > 0)
                 throw new ApiException(ErrorCodes.AlreadyApplied, "You have already applied to this class.", 409);
 
+            // Then capacity check (NO_SEATS)
+            long heldCount;
+            await using (var c1 = conn.CreateCommand())
+            {
+                c1.Transaction = tx;
+                c1.CommandText = "SELECT COUNT(*) FROM holds WHERE \"ClassId\" = @cid AND \"Status\" = 'HELD' AND \"ExpiresAt\" > @now";
+                var p1 = c1.CreateParameter(); p1.ParameterName = "@cid"; p1.Value = classId; c1.Parameters.Add(p1);
+                var p2 = c1.CreateParameter(); p2.ParameterName = "@now"; p2.Value = now; c1.Parameters.Add(p2);
+                heldCount = (long)(await c1.ExecuteScalarAsync(ct) ?? 0L);
+            }
+
+            long confirmedCount;
+            await using (var c2 = conn.CreateCommand())
+            {
+                c2.Transaction = tx;
+                c2.CommandText = "SELECT COUNT(*) FROM holds WHERE \"ClassId\" = @cid AND \"Status\" = 'CONFIRMED'";
+                var p = c2.CreateParameter(); p.ParameterName = "@cid"; p.Value = classId; c2.Parameters.Add(p);
+                confirmedCount = (long)(await c2.ExecuteScalarAsync(ct) ?? 0L);
+            }
+
+            if (heldCount + confirmedCount >= totalSeats)
+                throw new ApiException(ErrorCodes.NoSeats, "No seats are left in this class.", 409);
+
             var holdId = NewHoldId();
             var expiresAt = now.AddSeconds(_holdDurationSeconds);
 
@@ -204,7 +206,8 @@ public class AdmissionService
             }
 
             await tx.CommitAsync(ct);
-            _logger.LogInformation("Hold created {HoldId} class {ClassId} student {StudentId}", holdId, classId, studentId);
+            var maskedStudent = studentId.Length > 4 ? "****" + studentId[^4..] : "****";
+            _logger.LogInformation("Hold created {HoldId} class {ClassId} student {StudentId}", holdId, classId, maskedStudent);
             return new HoldResponse(holdId, classId, studentId, "HELD", expiresAt);
         }
         catch (Exception)
