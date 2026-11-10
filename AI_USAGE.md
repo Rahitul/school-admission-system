@@ -1,30 +1,15 @@
-# AI Usage
-
-I used AI tools while doing this assignment, mostly for speeding up the boring
-parts and for checking my own work. I wrote the final code myself and I
-understand every part of it.
-
 ## Tools I used
 
-- **Claude (Anthropic)** — I used it to draft the PRD and to think through the
+- **Claude** — I used it to draft the PRD and to think through the
   concurrency design (row lock vs. in-memory lock, the partial unique index,
   idempotent confirm). I also asked it to review my API contract against the
   brief.
-- **OpenCode (Beam model)** — used for scaffolding boilerplate: empty .NET
+- **OpenCode** — used for scaffolding boilerplate: empty .NET
   controller shells, the React component skeleton, Dockerfiles, docker-compose,
   and the first draft of the README/ASSUMPTIONS files.
-- **GitHub Copilot (VS Code)** — small inline completions while typing
+- **GitHub Copilot** — small inline completions while typing
   (variable names, small LINQ expressions, CSS). I accepted only the ones I
   agreed with.
-
-## Parts I did myself (no AI)
-
-- The seat-counting logic and the `FOR UPDATE` transaction in
-  `AdmissionService.CreateHoldAsync`.
-- The expiry handling (lazy evaluation + the sweeper) and the decision to flip
-  expired holds to EXPIRED inside the write transaction so re-application works.
-- The frontend polling and countdown logic.
-- All the debugging and the final testing.
 
 ## Where AI was wrong (and what I did about it)
 
@@ -68,8 +53,3 @@ understand every part of it.
 - Checked the database survived `docker compose down` then `up`.
 - Read every AI-suggested change before keeping it. I rejected anything I could
   not explain in my own words.
-
-## Note
-
-I did not paste the assignment PDF into any AI tool, as the brief asks. I only
-shared my own code and the PRD I wrote from the brief.
