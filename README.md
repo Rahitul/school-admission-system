@@ -57,6 +57,25 @@ uses Option 2 from the PRD (Section 17.3): the value is passed as a Docker build
 argument in docker-compose.yml. If you change it, rebuild with:
   docker compose up --build
 
+## Frontend workflow (how to use the UI)
+1. Open http://localhost:3000. You land on the **Classes** tab.
+2. Type your 17-digit birth registration number in the top box and click **Save**
+   (stored in localStorage; survives refresh / browser reopen).
+3. Browse classes: each card shows name, total, held, confirmed, available seats.
+   Seat counts refresh every ~4 seconds.
+4. Click **Apply** on a class to create a hold (HELD, expires in HOLD_DURATION_SECONDS,
+   default 10 min). Disabled if no seats left or you already applied to that class.
+5. The **Application Detail** modal opens: status, expiry countdown, and two buttons:
+   - **Pay admission fee** (only when HELD & not expired) -> confirms the admission.
+   - **Cancel** (only when HELD) -> cancels and releases the seat.
+   When the countdown hits zero, status becomes EXPIRED without reload and Pay disables.
+6. **My Applications** tab lists all your applications (HELD, CONFIRMED, EXPIRED,
+   CANCELLED) with class name, status, and expiry; click **View** for details.
+7. **Create Class** tab (admin): enter name + total seats (1-10000) and submit.
+8. **Students** tab (admin view): lists each student ID with their classes and statuses.
+9. Errors (invalid ID, no seats, expired, server down) show as readable messages;
+   a loading indicator shows during API calls.
+
 ## Project structure
 ```
 backend/        .NET 8 Web API, EF Core, PostgreSQL, tests
