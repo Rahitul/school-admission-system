@@ -11,6 +11,14 @@ docker compose up --build
 ```
 (`--build` is only needed the first time or after code changes; afterwards `docker compose up` is enough.)
 
+## Run frontend locally (without Docker)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Then open http://localhost:5173.
+
 - Frontend: http://localhost:3000
 - Backend: http://localhost:8080
 - Swagger: http://localhost:8080/swagger
@@ -25,7 +33,7 @@ Data persists in the named volume `pgdata`. Do NOT use `down -v`.
 ## Environment variables
 Backend:
 - `ConnectionStrings__DefaultConnection` / `DATABASE_URL`: PostgreSQL connection string.
-- `HOLD_DURATION_SECONDS`: hold lifetime in seconds (default 600).
+- `HOLD_DURATION_SECONDS`: hold lifetime in seconds (default 20).
 - `CORS_ORIGINS`: comma-separated allowed origins (default `http://localhost:3000,http://localhost:5173`; use `*` for any).
 
 Frontend:
@@ -64,7 +72,7 @@ argument in docker-compose.yml. If you change it, rebuild with:
 3. Browse classes: each card shows name, total, held, confirmed, available seats.
    Seat counts refresh every ~4 seconds.
 4. Click **Apply** on a class to create a hold (HELD, expires in HOLD_DURATION_SECONDS,
-   default 10 min). Disabled if no seats left or you already applied to that class.
+   default 20 sec). Disabled if no seats left or you already applied to that class.
 5. The **Application Detail** modal opens: status, expiry countdown, and two buttons:
    - **Pay admission fee** (only when HELD & not expired) -> confirms the admission.
    - **Cancel** (only when HELD) -> cancels and releases the seat.
