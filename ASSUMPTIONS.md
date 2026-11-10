@@ -36,8 +36,8 @@ I use prefixed GUIDs like c_... and h_...
 Reason: the brief says ID formats are examples only. Prefixed GUIDs are unique and easy to read in logs.
 
 ## 10 Hold duration default and units
-HOLD_DURATION_SECONDS, default 600, in seconds, must be positive.
-Reason: matches the brief's default (600 s = 10 minutes). Bad or non-positive values fall back to 600 so a hold never breaks.
+HOLD_DURATION_SECONDS, default 20, in seconds, must be positive.
+Reason: hold lifetime set to 20 seconds. Bad or non-positive values fall back to 20 so a hold never breaks.
 
 ## 11 Expiry mechanism
 Lazy evaluation plus a background sweeper every 5 seconds.

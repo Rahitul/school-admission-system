@@ -18,10 +18,10 @@ public class AdmissionService
         _logger = logger;
         var raw = Environment.GetEnvironmentVariable("HOLD_DURATION_SECONDS")
                   ?? config["HOLD_DURATION_SECONDS"]
-                  ?? "600";
+                  ?? "20";
         if (!int.TryParse(raw, out var seconds) || seconds <= 0)
         {
-            seconds = 600;
+            seconds = 20;
         }
         _holdDurationSeconds = seconds;
     }

@@ -11,7 +11,7 @@ docker compose up --build
 ```
 (`--build` is only needed the first time or after code changes; afterwards `docker compose up` is enough.)
 
-## Run frontend locally (without Docker)
+## Run frontend locally
 ```bash
 cd frontend
 npm install
@@ -65,7 +65,7 @@ uses Option 2 from the PRD (Section 17.3): the value is passed as a Docker build
 argument in docker-compose.yml. If you change it, rebuild with:
   docker compose up --build
 
-## Frontend workflow (how to use the UI)
+## Frontend workflow
 1. Open http://localhost:3000. You land on the **Classes** tab.
 2. Type your 17-digit birth registration number in the top box and click **Save**
    (stored in localStorage; survives refresh / browser reopen).

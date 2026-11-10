@@ -23,7 +23,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=school_admission;Username=postgres;Password=postgres;Maximum Pool Size=200"
-      HOLD_DURATION_SECONDS: "${HOLD_DURATION_SECONDS:-600}"
+      HOLD_DURATION_SECONDS: "${HOLD_DURATION_SECONDS:-20}"
     ports:
       - "8080:8080"
     healthcheck:
